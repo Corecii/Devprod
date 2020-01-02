@@ -21,7 +21,7 @@ const cmdOptionsDefinitions = [
 
 const cmdOptionsGuide = [
     {
-        header: "Devprod (ts)",
+        header: "Devprod",
         content: [
             "A utility to create and update Roblox Developer Products from a JSON file.",
             "Devprod requires a properly-formatted {bold X.devprod.json} file to run.",

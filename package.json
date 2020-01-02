@@ -1,7 +1,7 @@
 {
-  "name": "devprod-ts",
+  "name": "devprod",
   "version": "1.0.0",
-  "description": "",
+  "description": "A tool to set Roblox Developer Product configuaration from a json file.",
   "main": "./out/main.js",
   "scripts": {
     "build": "tsc",
