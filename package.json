@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "description": "A tool to set Roblox Developer Product configuaration from a json file.",
   "main": "./out/main.js",
+  "bin": {
+    "devprod": "./bin/cli"
+  },
   "scripts": {
+    "install": "tsc",
     "build": "tsc",
+    "release": "pkg -o devprod -t node10-win-x64,node10-win-x86,node10-macos-x64,node10-linux-x64 .\\out\\main.js",
     "test": "tsc && node out/main.js"
   },
   "author": "corecii@corecii.com",
