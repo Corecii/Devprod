@@ -1,0 +1,8 @@
+out
+node_modules
+.vscode-test/
+*.vsix
+.vscode/
+
+build.rbxm
+log-to-vs-code-roblox-plugin.rbxm
