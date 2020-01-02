@@ -36,8 +36,8 @@ A short `game.devprod.json`:
             "name": "First product",
             "description": "",
             "price": 50,
-			"imageId": 0,
-			"productId": 945265100,
+            "imageId": 0,
+            "productId": 945265100,
             "uploadedHash": "TXKoklTPFo8s5j0uFPm/KE0OW1g="
         },
         {
@@ -46,8 +46,8 @@ A short `game.devprod.json`:
             "price": 100,
             "productId": 945265311,
             "uploadedHash": "439y8RT5rhmPh1M4k3TDYgknR7o="
-		}
-	]
+        }
+    ]
 }
 ```
 
