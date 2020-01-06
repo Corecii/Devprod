@@ -1,6 +1,6 @@
 {
   "name": "devprod",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A tool to set Roblox Developer Product configuaration from a json file.",
   "main": "./out/main.js",
   "bin": {
