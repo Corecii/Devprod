@@ -172,8 +172,10 @@ const cmdOptionsGuide = [
             const result = await devprod.updateEntries(config, options);
             console.log(`Checked ${total} entries`);
             console.log(`${result.addSuccess.length} products created`);
+            console.log(`${result.toNotAdd.length} entry creations skipped`);
             console.log(`${result.addFailed.length} products failed to create`);
             console.log(`${result.updateSuccess.length} entries updated`);
+            console.log(`${result.toNotUpdate.length} entry updates skipped`);
             console.log(`${result.updateFailed.length} entries failed to update`);
             if (result.addSuccess.length > 0) {
                 console.log("Created products:");
