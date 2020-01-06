@@ -92,5 +92,21 @@
             "productId": 945284855,
             "uploadedHash": "M+st98AZlxGRpKDB6lXXcaUOWaY="
         }
+    ],
+    "gamepasses": [
+        {
+            "name": "Gamepass 1",
+            "description": "A neat description",
+            "price": 10,
+            "gamepassId": 7916307,
+            "uploadedHash": "TTc3+maH8/zL3thiQX1Y53Qz0z8="
+        },
+        {
+            "name": "Gamepass 2",
+            "description": "A cool description",
+            "price": 20,
+            "gamepassId": 7948650,
+            "uploadedHash": "rHgThg96szq1GxwK/8awkkZpDKo="
+        }
     ]
 }

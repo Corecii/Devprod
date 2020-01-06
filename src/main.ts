@@ -52,7 +52,14 @@ const cmdOptionsGuide = [
 ];
 
 (async () => {
-    const cmdOptions = commandLineArgs.default(cmdOptionsDefinitions)._all;
+    let cmdOptions;
+    try {
+        cmdOptions = commandLineArgs.default(cmdOptionsDefinitions)._all;
+    } catch (error) {
+        console.error(error.message);
+        console.log ("Try devprod --help");
+        return;
+    }
 
     let needsHelp = false;
     if (cmdOptions.help || cmdOptions["?"]) {
@@ -118,12 +125,13 @@ const cmdOptionsGuide = [
         cookie: cookie,
     } as devprod.IOptions;
 
+    const total = (config.products?.length || 0) + (config.gamepasses?.length || 0);
     if (cmdOptions.preview) {
         if (cmdOptions.hash) {
-            const result = await devprod.checkHashProducts(config, options);
-            console.log(`Checked ${config.products.length} products`);
-            console.log(`${result.toUpdate.length} products to update local hashes`);
-            console.log(`${result.toNotUpdate.length} products to leave existing up-to-date hashes`);
+            const result = await devprod.checkHashEntries(config, options);
+            console.log(`Checked ${total} entries`);
+            console.log(`${result.toUpdate.length} entries to update local hashes`);
+            console.log(`${result.toNotUpdate.length} entries to leave existing up-to-date hashes`);
             console.log("Actions:");
             for (const product of result.toUpdate) {
                 console.log(`  NEWHASH ${product.name}`);
@@ -132,13 +140,13 @@ const cmdOptionsGuide = [
                 console.log(`  LEAVE ${product.name}`);
             }
         } else {
-            const result = await devprod.checkProducts(config, options);
-            console.log(`Checked ${config.products.length} products`);
-            console.log(`${result.toAdd.length} products to be created`);
-            console.log(`${result.toNotAdd.length} products to not be created`);
-            console.log(`${result.outdated.length} outdated products according to local hashes`);
-            console.log(`${result.toUpdate.length} products to be updated`);
-            console.log(`${result.toNotUpdate.length} products to not be updated`);
+            const result = await devprod.checkEntries(config, options);
+            console.log(`Checked ${total} entries`);
+            console.log(`${result.toAdd.length} entries to be created`);
+            console.log(`${result.toNotAdd.length} entries to not be created`);
+            console.log(`${result.outdated.length} outdated entries according to local hashes`);
+            console.log(`${result.toUpdate.length} entries to be updated`);
+            console.log(`${result.toNotUpdate.length} entries to not be updated`);
             console.log("Actions:");
             for (const product of result.toAdd) {
                 console.log(`  ADD ${product.name}`);
@@ -154,23 +162,35 @@ const cmdOptionsGuide = [
             }
         }
     } else if (cmdOptions.hash) {
-        const result = devprod.hashProducts(config, options);
-        console.log(`Checked ${config.products.length} products`);
-        console.log(`${result.total} existing products processed`);
-        console.log(`${result.total - result.updated} product hashes already up-to-date`);
-        console.log(`${result.updated} product hashes updated`);
+        const result = devprod.hashEntries(config, options);
+        console.log(`Checked ${total} entries`);
+        console.log(`${result.total} existing entries processed`);
+        console.log(`${result.total - result.updated} entry hashes already up-to-date`);
+        console.log(`${result.updated} entry hashes updated`);
     } else {
         try {
-            const result = await devprod.updateProducts(config, options);
-            console.log(`Checked ${config.products.length} products`);
-            console.log(`${result.added.length + result.updated} total products processed`);
-            console.log(`${result.added.length} products created`);
-            console.log(`${result.outdated} outdated products updated`);
-            console.log(`${result.updated - result.outdated} up-to-date products force-updated`);
-            if (result.added.length > 0) {
+            const result = await devprod.updateEntries(config, options);
+            console.log(`Checked ${total} entries`);
+            console.log(`${result.addSuccess.length} products created`);
+            console.log(`${result.addFailed.length} products failed to create`);
+            console.log(`${result.updateSuccess.length} entries updated`);
+            console.log(`${result.updateFailed.length} entries failed to update`);
+            if (result.addSuccess.length > 0) {
                 console.log("Created products:");
-                for (const product of result.added) {
+                for (const product of result.addSuccess) {
                     console.log(`  ${product.name}: ${product.productId}`);
+                }
+            }
+            if (result.addFailed.length > 0) {
+                console.log("Failed creations:");
+                for (const info of result.addFailed) {
+                    console.log(`  ${info.product.name}: ${info.error.message}`);
+                }
+            }
+            if (result.updateFailed.length > 0) {
+                console.log("Failed updates:");
+                for (const info of result.updateFailed) {
+                    console.log(`  ${info.product.name}: ${info.error.message}`);
                 }
             }
         } catch (error) {

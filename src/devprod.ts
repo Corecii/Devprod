@@ -12,10 +12,12 @@ export interface IOptions {
 export interface IConfig {
     universeId: number;
     products: IConfigDevprod[];
+    gamepasses: IConfigDevprod[];
 }
 
 export interface IConfigDevprod {
     productId?: number;
+    gamepassId?: number;
     name: string;
     description?: string;
     price?: number;
@@ -42,12 +44,31 @@ export async function parseConfig(text: string) {
         if (typeof(result.universeId) !== "number") {
             throw new ConfigError("Bad or missing universeId");
         }
+        if (result.products === undefined) {
+            result.products = [];
+        }
+        if (result.gamepasses === undefined) {
+            result.gamepasses = [];
+        }
         if (typeof(result.products) !== "object" || !Array.isArray(result.products)) {
             throw new ConfigError("Bad or missing products array");
+        }
+        if (typeof(result.gamepasses) !== "object" || !Array.isArray(result.gamepasses)) {
+            throw new ConfigError("Bad or missing gamepasses array");
         }
         let index = 0;
         for (const product of result.products) {
             if (!maybe("number", product.productId)) { throw new ConfigError(`Bad productId on product ${index}`); }
+            if (typeof(product.name) !== "string") { throw new ConfigError(`Bad or missing name on product ${index}`); }
+            if (!maybe("string", product.description)) { throw new ConfigError(`Bad description on product ${index}`); }
+            if (!maybe("number", product.price) || product.price < 0) { throw new ConfigError(`Bad price on product ${index}`); }
+            if (!maybe("number", product.imageId) || product.imageId < 0) { throw new ConfigError(`Bad imageId on product ${index}`); }
+            if (!maybe("string", product.uploadedHash)) { throw new ConfigError(`Bad uploadedHash on product ${index}`); }
+            index++;
+        }
+        index = 0;
+        for (const product of result.gamepasses) {
+            if (!maybe("number", product.gamepassId)) { throw new ConfigError(`Bad gamepassId on product ${index}`); }
             if (typeof(product.name) !== "string") { throw new ConfigError(`Bad or missing name on product ${index}`); }
             if (!maybe("string", product.description)) { throw new ConfigError(`Bad description on product ${index}`); }
             if (!maybe("number", product.price) || product.price < 0) { throw new ConfigError(`Bad price on product ${index}`); }
@@ -83,8 +104,8 @@ function getHash(product: IConfigDevprod) {
     });
 }
 
-function isProductOutdated(product: IConfigDevprod) {
-    if (product.productId === undefined || product.productId === null || product.uploadedHash === undefined || product.uploadedHash === null) {
+function isEntryOutdated(product: IConfigDevprod) {
+    if ((!product.productId && !product.gamepassId) || product.uploadedHash === undefined || product.uploadedHash === null) {
         return true;
     }
     return getHash(product) !== product.uploadedHash;
@@ -122,7 +143,24 @@ async function updateProduct(universeId: number, product: IConfigDevprod, cookie
     }
 }
 
-export async function checkProducts(config: IConfig, options: IOptions) {
+async function updateGamepass(universeId: number, product: IConfigDevprod, cookie: string) {
+    if (typeof(product.gamepassId) !== "number") {
+        throw new Error("Bad or missing gamepassId at runtime");
+    }
+    try {
+        await roblox.gamepassUpdate(universeId, product.gamepassId, {
+            name: product.name,
+            description: product.description,
+            isForSale: product.price ? product.price !== 0 : false,
+            price: product.price,
+        }, cookie);
+        product.uploadedHash = getHash(product);
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function checkEntries(config: IConfig, options: IOptions) {
     const toAdd = [];
     const toNotAdd = [];
     const outdated = [];
@@ -136,7 +174,25 @@ export async function checkProducts(config: IConfig, options: IOptions) {
                 toNotAdd.push(product);
             }
         } else {
-            if (isProductOutdated(product)) {
+            if (isEntryOutdated(product)) {
+                outdated.push(product);
+                if (options.update || options.updateAll) {
+                    toUpdate.push(product);
+                } else {
+                    toNotUpdate.push(product);
+                }
+            } else if (options.updateAll) {
+                toUpdate.push(product);
+            } else {
+                toNotUpdate.push(product);
+            }
+        }
+    }
+    for (const product of config.gamepasses) {
+        if (product.gamepassId === undefined || product.gamepassId === null) {
+            toNotAdd.push(product);
+        } else {
+            if (isEntryOutdated(product)) {
                 outdated.push(product);
                 if (options.update || options.updateAll) {
                     toUpdate.push(product);
@@ -159,43 +215,55 @@ export async function checkProducts(config: IConfig, options: IOptions) {
     };
 }
 
-export async function updateProducts(config: IConfig, options: IOptions) {
-    const added: IConfigDevprod[] = [];
-    let outdated = 0;
-    let updated = 0;
-    for (const product of config.products) {
-        let update = false;
-        if (product.productId === undefined || product.productId === null) {
-            update = options.create;
-        } else {
-            const isOutdated = isProductOutdated(product);
-            update = options.updateAll || (options.update && isOutdated);
-            if (update && isOutdated) {
-                outdated++;
-            }
-        }
-        if (update) {
-            if (product.productId === undefined || product.productId === null) {
-                await addProduct(config.universeId, product, options.cookie);
-                added.push(product);
-            } else {
-                updated++;
-                await updateProduct(config.universeId, product, options.cookie);
-            }
+export async function updateEntries(config: IConfig, options: IOptions) {
+    const actions = await checkEntries(config, options);
+    const addSuccess: IConfigDevprod[] = [];
+    const addFailed: Array<{ product: IConfigDevprod, error: Error }> = [];
+    const updateSuccess: IConfigDevprod[] = [];
+    const updateFailed: Array<{ product: IConfigDevprod, error: Error }> = [];
+    for (const product of actions.toAdd) {
+        try {
+            await addProduct(config.universeId, product, options.cookie);
+            addSuccess.push(product);
+        } catch (error) {
+            addFailed.push({ product: product, error: error });
         }
     }
-    return {
-        added: added,
-        outdated: outdated,
-        updated: updated,
-    };
+    for (const product of actions.toUpdate) {
+        try {
+            if (product.productId) {
+                await updateProduct(config.universeId, product, options.cookie);
+            } else if (product.gamepassId) {
+                await updateGamepass(config.universeId, product, options.cookie);
+            }
+            updateSuccess.push(product);
+        } catch (error) {
+            updateFailed.push({ product: product, error: error });
+        }
+    }
+    const result = actions as any;
+    result.addSuccess = addSuccess;
+    result.addFailed = addFailed;
+    result.updateSuccess = updateSuccess;
+    result.updateFailed = updateFailed;
+    return result;
 }
 
-export function hashProducts(config: IConfig, options: IOptions) {
+export function hashEntries(config: IConfig, options: IOptions) {
     let total = 0;
     let updated = 0;
     for (const product of config.products) {
         if (product.productId !== null && product.productId !== undefined) {
+            total++;
+            const newHash = getHash(product);
+            if (newHash !== product.uploadedHash) {
+                updated++;
+                product.uploadedHash = newHash;
+            }
+        }
+    }
+    for (const product of config.gamepasses) {
+        if (product.gamepassId !== null && product.gamepassId !== undefined) {
             total++;
             const newHash = getHash(product);
             if (newHash !== product.uploadedHash) {
@@ -210,10 +278,20 @@ export function hashProducts(config: IConfig, options: IOptions) {
     };
 }
 
-export function checkHashProducts(config: IConfig, options: IOptions) {
+export function checkHashEntries(config: IConfig, options: IOptions) {
     const toUpdate = [];
     const toNotUpdate = [];
     for (const product of config.products) {
+        if (product.productId !== null && product.productId !== undefined) {
+            const newHash = getHash(product);
+            if (newHash !== product.uploadedHash) {
+                toUpdate.push(product);
+            } else {
+                toNotUpdate.push(product);
+            }
+        }
+    }
+    for (const product of config.gamepasses) {
         if (product.productId !== null && product.productId !== undefined) {
             const newHash = getHash(product);
             if (newHash !== product.uploadedHash) {

@@ -9,6 +9,14 @@ interface IDevprodUpdateOptions {
     PriceInRobux?: number;
 }
 
+interface IGamepassUpdateOptions {
+    id?: number;
+    name?: string;
+    description?: string;
+    isForSale?: boolean;
+    price?: number;
+}
+
 export class DevprodError extends Error {
     public code: number;
     public raw?: any;
@@ -174,5 +182,47 @@ export async function devprodAdd(universeId: number, devprodOptions: IDevprodUpd
         throw new DevprodError(code, message, result);
     } else {
         throw new DevprodError(-2, `Unknown error: bad response format. Are you logged in? Has the legacy developer products API changed?`, result);
+    }
+}
+
+// gamepassAdd:
+// 1. Send a request to https://www.roblox.com/develop?Page=game-passes to get the __RequestVerificationToken
+// 2. Send a request to https://www.roblox.com/build/verifyupload to get the upload page
+//   * All fields must be present including the file image and __RequestVerificationToken or 500 Internal Server Error is returned
+// 3. Send a request to https://www.roblox.com/build/doverifiedupload with the data and token from #2.
+
+export async function gamepassUpdate(universeId: number, gamepassId: number, devprodOptions: IGamepassUpdateOptions, cookie: string) {
+    const newOptions = {
+        id: gamepassId,
+        name: devprodOptions.name,
+        description: devprodOptions.description,
+        isForSale: devprodOptions.isForSale,
+        price: devprodOptions.price,
+    };
+    const options = {
+        method: "POST",
+        url: `https://www.roblox.com/game-pass/update`,
+        headers:
+        {
+            "Cookie": cookie,
+            "Content-Type": "application/json",
+        },
+        body: newOptions,
+        json: true,
+    };
+    let result;
+    try {
+        result = await robloxRequest(options);
+    } catch (error) {
+        throw new DevprodError(-1, `Unknown error: ${error}`, error);
+    }
+    if (result) {
+        if (result.isValid) {
+            return gamepassId;
+        } else {
+            throw new DevprodError(-2, result.error, result);
+        }
+    } else {
+        throw new DevprodError(-2, `Unknown error: missing result`, result);
     }
 }
