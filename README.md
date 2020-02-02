@@ -8,7 +8,7 @@ Devprod uses hashes of individual product entries to know when they have changed
 
 On Windows, Devprod can retrieve your Roblox Studio cookie automatically so you do not have to provide login details or a cookie. Alternatively, you can set the `DEVPROD_COOKIE` environment variable. Devprod does not provide a mechanism for logging in and does not permit passwords or cookies in the command line arguments.
 
-Devprod is one-way: it will only upload changes to the website. It will not download the product list from the website. Devprod also does not catch text filtering issues at the moment.
+Devprod is one-way: it will only upload changes to the website. Devprod will only download from the website after and upload to warn when text is filtered.
 
 ## Examples:
 

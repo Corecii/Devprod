@@ -2,11 +2,11 @@
     "universeId": 1068046093,
     "products": [
         {
-            "name": "011 123 6749",
-            "description": "011 123 6749",
+            "name": "011 555 6749",
+            "description": "011 555 6749",
             "price": 0,
             "productId": 945265100,
-            "uploadedHash": "c48ltW9f8NBNPL5mvCCOGc6a8x4="
+            "uploadedHash": "3Q5D9/yBUixvGsO+CmgwrwKDK9Y="
         },
         {
             "name": "02",
@@ -95,11 +95,11 @@
     ],
     "gamepasses": [
         {
-            "name": "Gamepass 1",
+            "name": "Gamepass 123 555 1234",
             "description": "A neat description",
             "price": 10,
             "gamepassId": 7916307,
-            "uploadedHash": "TTc3+maH8/zL3thiQX1Y53Qz0z8="
+            "uploadedHash": "ne9foKINIi3coXhNQMB6NMyF77c="
         },
         {
             "name": "Gamepass 2",
