@@ -111,6 +111,18 @@ function isEntryOutdated(product: IConfigDevprod) {
     return getHash(product) !== product.uploadedHash;
 }
 
+async function viewProduct(universeId: number, product: IConfigDevprod, cookie: string) {
+    if (typeof(product.productId) !== "number") {
+        throw new Error("Bad or missing productId at runtime");
+    }
+    try {
+        const details = await roblox.devprodView(universeId, product.productId, cookie);
+        return details;
+    } catch (error) {
+        throw error;
+    }
+}
+
 async function addProduct(universeId: number, product: IConfigDevprod, cookie: string) {
     try {
         const productId = await roblox.devprodAdd(universeId, {
@@ -143,6 +155,18 @@ async function updateProduct(universeId: number, product: IConfigDevprod, cookie
     }
 }
 
+async function viewGamepass(universeId: number, product: IConfigDevprod, cookie: string) {
+    if (typeof(product.gamepassId) !== "number") {
+        throw new Error("Bad or missing gamepassId at runtime");
+    }
+    try {
+        const details = await roblox.gamepassView(universeId, product.gamepassId, cookie);
+        return details;
+    } catch (error) {
+        throw error;
+    }
+}
+
 async function updateGamepass(universeId: number, product: IConfigDevprod, cookie: string) {
     if (typeof(product.gamepassId) !== "number") {
         throw new Error("Bad or missing gamepassId at runtime");
@@ -161,11 +185,11 @@ async function updateGamepass(universeId: number, product: IConfigDevprod, cooki
 }
 
 export async function checkEntries(config: IConfig, options: IOptions) {
-    const toAdd = [];
-    const toNotAdd = [];
-    const outdated = [];
-    const toUpdate = [];
-    const toNotUpdate = [];
+    const toAdd: IConfigDevprod[] = [];
+    const toNotAdd: IConfigDevprod[] = [];
+    const outdated: IConfigDevprod[] = [];
+    const toUpdate: IConfigDevprod[] = [];
+    const toNotUpdate: IConfigDevprod[] = [];
     for (const product of config.products) {
         if (product.productId === undefined || product.productId === null) {
             if (options.create) {
@@ -221,6 +245,8 @@ export async function updateEntries(config: IConfig, options: IOptions) {
     const addFailed: Array<{ product: IConfigDevprod, error: Error }> = [];
     const updateSuccess: IConfigDevprod[] = [];
     const updateFailed: Array<{ product: IConfigDevprod, error: Error }> = [];
+    const verifySuccess: Array<{ product: IConfigDevprod, details: any }> = [];
+    const verifyFailed: Array<{ product: IConfigDevprod, error: Error }> = [];
     for (const product of actions.toAdd) {
         try {
             await addProduct(config.universeId, product, options.cookie);
@@ -241,11 +267,28 @@ export async function updateEntries(config: IConfig, options: IOptions) {
             updateFailed.push({ product: product, error: error });
         }
     }
+    for (const list of [addSuccess, updateSuccess]) {
+        for (const product of list) {
+            try {
+                let details;
+                if (product.productId) {
+                    details = await viewProduct(config.universeId, product, options.cookie);
+                } else if (product.gamepassId) {
+                    details = await viewGamepass(config.universeId, product, options.cookie);
+                }
+                verifySuccess.push({ product: product, details: details });
+            } catch (error) {
+                verifyFailed.push({ product: product, error: error });
+            }
+        }
+    }
     const result = actions as any;
     result.addSuccess = addSuccess;
     result.addFailed = addFailed;
     result.updateSuccess = updateSuccess;
     result.updateFailed = updateFailed;
+    result.verifySuccess = verifySuccess;
+    result.verifyFailed = verifyFailed;
     return result;
 }
 

@@ -195,6 +195,37 @@ const cmdOptionsGuide = [
                     console.log(`  ${info.product.name}: ${info.error.message}`);
                 }
             }
+
+            let loggedFailedVerify = false;
+            function logFailedVerify() {
+                if (loggedFailedVerify) {
+                    return;
+                }
+                loggedFailedVerify = true;
+                console.log("Failed verify:");
+            }
+
+            if (result.verifyFailed.length > 0) {
+                logFailedVerify();
+                for (const info of result.verifyFailed) {
+                    console.log(`  ${info.product.name}: ${info.error.message}`);
+                }
+            }
+
+            for (const info of result.verifySuccess) {
+                if (info.details.name !== info.product.name) {
+                    logFailedVerify();
+                    console.log(`  ${info.product.name}  [NAME]: ${info.details.name}`);
+                }
+                if (info.details.description !== info.product.description) {
+                    logFailedVerify();
+                    console.log(`  ${info.product.name}  [DESC]: ${info.details.description}`);
+                }
+                if (info.details.price !== info.product.price) {
+                    logFailedVerify();
+                    console.log(`  ${info.product.name} [PRICE]: ${info.details.price}`);
+                }
+            }
         } catch (error) {
             console.error(`Failed to update some products because: ${error.message}`);
             console.log("Saving current config state...");

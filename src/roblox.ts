@@ -108,6 +108,46 @@ export async function robloxLogin(username: string, password: string) {
     throw new Error("No cookie returned");
 }
 
+export async function devprodView(universeId: number, productId: number, cookie: string) {
+    // universeId is used, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
+    const options = {
+        method: "GET",
+        // this endpoint is not public despite being on the public api domain
+        // this seems to be what MarketplaceService:GetProductInfo uses internally
+        url: `https://api.roblox.com/marketplace/productDetails?productId=${productId}`,
+        headers:
+        {
+            "Cookie": cookie,
+            "Content-Type": "application/json",
+        },
+        json: true,
+    };
+    let result;
+    try {
+        result = await robloxRequest(options);
+    } catch (error) {
+        if (error.response?.body?.errors) {
+            const errData = error.response.body.errors[0];
+            if (errData) {
+                throw new DevprodError(errData.code ?? -1, errData.message ?? "Unknown error: missing error message from response", error);
+            } else {
+                throw new DevprodError(-1, "Unknown error: missing specific error data from response", error);
+            }
+        } else {
+            throw new DevprodError(-1, `Unknown error: ${error}`, error);
+        }
+    }
+    if (result) {
+        return {
+            name: result.Name || "",
+            description: result.Description || "",
+            price: result.PriceInRobux || 0,
+        };
+    } else {
+        throw new DevprodError(-2, `Unknown error: missing result`, result);
+    }
+}
+
 export async function devprodUpdate(universeId: number, productId: number, devprodOptions: IDevprodUpdateOptions, cookie: string) {
     const options = {
         method: "POST",
@@ -190,6 +230,44 @@ export async function devprodAdd(universeId: number, devprodOptions: IDevprodUpd
 // 2. Send a request to https://www.roblox.com/build/verifyupload to get the upload page
 //   * All fields must be present including the file image and __RequestVerificationToken or 500 Internal Server Error is returned
 // 3. Send a request to https://www.roblox.com/build/doverifiedupload with the data and token from #2.
+
+export async function gamepassView(universeId: number, gamepassId: number, cookie: string) {
+    // universeId is used, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
+    const options = {
+        method: "GET",
+        url: `https://api.roblox.com/marketplace/game-pass-product-info?gamePassId=${gamepassId}`,
+        headers:
+        {
+            "Cookie": cookie,
+            "Content-Type": "application/json",
+        },
+        json: true,
+    };
+    let result;
+    try {
+        result = await robloxRequest(options);
+    } catch (error) {
+        if (error.response?.body?.errors) {
+            const errData = error.response.body.errors[0];
+            if (errData) {
+                throw new DevprodError(errData.code ?? -1, errData.message ?? "Unknown error: missing error message from response", error);
+            } else {
+                throw new DevprodError(-1, "Unknown error: missing specific error data from response", error);
+            }
+        } else {
+            throw new DevprodError(-1, `Unknown error: ${error}`, error);
+        }
+    }
+    if (result) {
+        return {
+            name: result.Name || "",
+            description: result.Description || "",
+            price: result.PriceInRobux || 0,
+        };
+    } else {
+        throw new DevprodError(-2, `Unknown error: missing result`, result);
+    }
+}
 
 export async function gamepassUpdate(universeId: number, gamepassId: number, devprodOptions: IGamepassUpdateOptions, cookie: string) {
     const newOptions = {
