@@ -1,5 +1,6 @@
 import * as objectHash from "object-hash";
 import * as roblox from "./roblox";
+import * as toml from "@iarna/toml";
 
 export interface IOptions {
     create: boolean;
@@ -38,9 +39,14 @@ function maybe(type: string, value: any) {
     return typeof(value) === type;
 }
 
-export async function parseConfig(text: string) {
+export async function parseConfig(text: string, fileType: "toml" | "json") {
     try {
-        const result = JSON.parse(text);
+        let result;
+        if (fileType === "toml") {
+            result = toml.parse(text);
+        } else {
+            result = JSON.parse(text);
+        }
         if (typeof(result.universeId) !== "number") {
             throw new ConfigError("Bad or missing universeId");
         }

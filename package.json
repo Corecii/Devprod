@@ -1,6 +1,6 @@
 {
   "name": "devprod",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A tool to set Roblox Developer Product configuaration from a json file",
   "keywords": [
     "roblox"
@@ -35,6 +35,7 @@
     "tslint": "^5.20.1"
   },
   "dependencies": {
+    "@iarna/toml": "https://github.com/Corecii/iarna-toml",
     "@types/request": "^2.48.3",
     "@types/request-promise": "^4.1.45",
     "beautiful-dom": "^1.0.7",

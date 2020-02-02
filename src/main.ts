@@ -1,16 +1,26 @@
-import * as commandLineArgs from "command-line-args";
+import * as toml from "@iarna/toml";import * as commandLineArgs from "command-line-args";
 import * as commandLineUsage from "command-line-usage";
 import * as fs from "fs-extra";
 import * as devprod from "./devprod";
 import * as roblox from "./roblox";
 
+function oneOf(arr: string[]) {
+    return (input: string) => {
+        if (arr.indexOf(input) === -1) {
+            throw new Error("Expected one of " + arr.join(", "))
+        }
+        return input;
+    }
+}
+
 const cmdOptionsDefinitions = [
     { name: "help", alias: "h", type: Boolean, description: "Display this help message", group: "main" },
     { name: "?", alias: "?", type: Boolean, description: "Display this help message", group: "main" },
     { name: "name", type: String, defaultOption: true,
-    typeLabel: "{underline name}", description: "short {underline name} file name. Will read and write to {underline name.devprod.json}", group: "file" },
+    typeLabel: "{underline name}", description: "short {underline name} file name. Will read and write to {underline name.devprod.toml} or {underline name.devprod.json}", group: "file" },
     { name: "file", type: String,
     typeLabel: "{underline file}", description: "long {underline file} name. Will read and write to {underline file} directly", group: "file" },
+    { name: "type", typeLabel: "{underline filetype}", type: oneOf(["auto", "toml", "json"]), description: "One of {underline auto}, {underline toml}, or {underline json}", defaultValue: "auto"},
     { name: "registry", alias: "r", type: Boolean, description: "Log in to Roblox using Roblox Studio's cookie from the registry", group: "login" },
     { name: "create", alias: "c", type: Boolean, description: "Create products that lack a productId and save the productIds to the file", group: "actions" },
     { name: "update", alias: "u", type: Boolean, description: "Update products with a productId that have new contents according to local hashes", group: "actions" },
@@ -23,14 +33,14 @@ const cmdOptionsGuide = [
     {
         header: "Devprod",
         content: [
-            "A utility to create and update Roblox Developer Products from a JSON file.",
-            "Devprod requires a properly-formatted {bold X.devprod.json} file to run.",
+            "A utility to create and update Roblox Developer Products from a TOML or JSON file.",
+            "Devprod requires a properly-formatted {bold X.devprod.toml} or {bold X.devprod.json} file to run.",
             "Devprod must be called with an action. One of:",
             "- any combination of {bold create}, {bold update}, {bold updateall}",
             "- or {bold hash}",
             "{bold preview} can be used to preview changes for any action",
             "",
-            "For example, to create and update products for {bold game.devprod.json} using the registry cookie, either of the following work:",
+            "For example, to create and update products for {bold game.devprod.toml} using the registry cookie, either of the following work:",
             "{bold devprod game --registry --create --update}",
             "{bold devprod game -rcu}",
         ],
@@ -99,9 +109,52 @@ const cmdOptionsGuide = [
         return;
     }
 
-    const fileName = cmdOptions.file || `${cmdOptions.name}.devprod.json`;
-
+    let fileName;
     let initialContentsString;
+    let fileType = cmdOptions.type;
+
+    if (cmdOptions.file) {
+        if (fileType === "auto") {
+            if (cmdOptions.file.endsWith(".toml")) {
+                fileType = "toml";
+            } else if (cmdOptions.file.endsWith(".json")) {
+                fileType = "json";
+            } else {
+                console.error(`Failed to determine file type for ${cmdOptions.file} because: file does not have a .toml or .json extension; please specify the type with --type`);
+                return;
+            }
+        }
+
+        fileName = cmdOptions.file;
+    } else if (cmdOptions.name) {
+        if (fileType === "auto") {
+            let tomlExists = false;
+            let jsonExists = false;
+            try {
+                tomlExists = await fs.pathExists(`${cmdOptions.name}.devprod.toml`);
+                jsonExists = await fs.pathExists(`${cmdOptions.name}.devprod.json`);
+            } catch (error) {
+                console.error(`Failed to determine file type for ${cmdOptions.name} because: ${error.message}`);
+                return;
+            }
+            if (tomlExists && jsonExists) {
+                console.error(`Failed to determine file type for ${cmdOptions.name} because: both ${cmdOptions.name}.devprod.toml and ${cmdOptions.name}.devprod.json exist`);
+                return;
+            }
+
+            if (tomlExists) {
+                fileType = "toml";
+            } else if (jsonExists) {
+                fileType = "json";
+            } else {
+                console.error(`Failed to determine file type for ${cmdOptions.name} because: neither ${cmdOptions.name}.devprod.toml nor ${cmdOptions.name}.devprod.json exist`);
+                return;
+            }
+        }
+
+        fileName = `${cmdOptions.name}.devprod.${fileType}`;
+    }
+
     try {
         initialContentsString = await fs.readFile(fileName);
     } catch (error) {
@@ -111,9 +164,9 @@ const cmdOptionsGuide = [
 
     let config: devprod.IConfig;
     try {
-        config = await devprod.parseConfig(initialContentsString);
+        config = await devprod.parseConfig(initialContentsString, fileType);
     } catch (error) {
-        console.error(`Failed to read json from ${fileName} because: ${error.message}`);
+        console.error(`Failed to read from ${fileName} because: ${error.message}`);
         return;
     }
 
@@ -235,7 +288,11 @@ const cmdOptionsGuide = [
     if (!cmdOptions.preview) {
         let finalContentsString;
         try {
-            finalContentsString = JSON.stringify(config, null, 4);
+            if (fileType === "toml") {
+                finalContentsString = toml.stringify(config as any);
+            } else {
+                finalContentsString = JSON.stringify(config, null, 4);
+            }
         } catch (error) {
             console.error("Failed to convert config to json. The existing config might be missing data including new product ids. Attempting to dump config...");
             console.error(`Reason: ${error.message}`);
