@@ -1,6 +1,6 @@
 {
   "name": "devprod",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "A tool to set Roblox Developer Product configuaration from a json file",
   "keywords": [
     "roblox"

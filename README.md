@@ -1,10 +1,13 @@
+Install with node and `npm install -g devprod` or download packaged binaries from [the releases page](https://github.com/Corecii/Devprod/releases).
+
 # Devprod
 
-Devprod is a tool to create and update Roblox Developer products according to a json file. This can alleviate the pain of clicking through the website when applying large changes such as sales.
+Devprod is a tool to create and update Roblox Developer products according to a toml or json file. This can alleviate the pain of clicking through the website when applying large changes such as sales.
 
-[`test.devprod.json`](./test.devprod.json) is an example file used for testing.
+[`test-toml.devprod.toml`](./test-toml.devprod.toml) and [`test-json.devprod.json`](./test-json.devprod.json) are example files used for testing.
+ is an example file used for testing.
 
-Devprod uses hashes of individual product entries to know when they have changed locally. Devprod will only post changes to the website if it notices that the entry has changed locally. You can override this by either forcing *every* product to post to the website or by removing the entry's hash from the json file.
+Devprod uses hashes of individual product entries to know when they have changed locally. Devprod will only post changes to the website if it notices that the entry has changed locally. You can override this by either forcing *every* product to post to the website or by removing the entry's hash from the file.
 
 On Windows, Devprod can retrieve your Roblox Studio cookie automatically so you do not have to provide login details or a cookie. Alternatively, you can set the `DEVPROD_COOKIE` environment variable. Devprod does not provide a mechanism for logging in and does not permit passwords or cookies in the command line arguments.
 
