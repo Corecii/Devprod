@@ -1,4 +1,5 @@
-import * as toml from "@iarna/toml";import * as commandLineArgs from "command-line-args";
+import * as toml from "@iarna/toml";
+import * as commandLineArgs from "command-line-args";
 import * as commandLineUsage from "command-line-usage";
 import * as fs from "fs-extra";
 import * as devprod from "./devprod";
@@ -7,10 +8,10 @@ import * as roblox from "./roblox";
 function oneOf(arr: string[]) {
     return (input: string) => {
         if (arr.indexOf(input) === -1) {
-            throw new Error("Expected one of " + arr.join(", "))
+            throw new Error("Expected one of " + arr.join(", "));
         }
         return input;
-    }
+    };
 }
 
 const cmdOptionsDefinitions = [

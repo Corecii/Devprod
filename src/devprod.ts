@@ -1,6 +1,6 @@
+import * as toml from "@iarna/toml";
 import * as objectHash from "object-hash";
 import * as roblox from "./roblox";
-import * as toml from "@iarna/toml";
 
 export interface IOptions {
     create: boolean;
@@ -117,6 +117,14 @@ function isEntryOutdated(product: IConfigDevprod) {
     return getHash(product) !== product.uploadedHash;
 }
 
+async function forceServerRenderThumbnail(imageId: number) {
+    try {
+        await roblox.requestAssetThumbnail(imageId, 100, 100, "png");
+    } catch (error) {
+        console.warn(`Failed to update asset thumbnail for ${imageId} because: ${error.message}`);
+    }
+}
+
 async function viewProduct(universeId: number, product: IConfigDevprod, cookie: string) {
     if (typeof(product.productId) !== "number") {
         throw new Error("Bad or missing productId at runtime");
@@ -131,6 +139,9 @@ async function viewProduct(universeId: number, product: IConfigDevprod, cookie: 
 
 async function addProduct(universeId: number, product: IConfigDevprod, cookie: string) {
     try {
+        if (product.imageId) {
+            await forceServerRenderThumbnail(product.imageId);
+        }
         const productId = await roblox.devprodAdd(universeId, {
             Name: product.name,
             Description: product.description,
@@ -149,6 +160,9 @@ async function updateProduct(universeId: number, product: IConfigDevprod, cookie
         throw new Error("Bad or missing productId at runtime");
     }
     try {
+        if (product.imageId) {
+            await forceServerRenderThumbnail(product.imageId);
+        }
         await roblox.devprodUpdate(universeId, product.productId, {
             Name: product.name,
             Description: product.description,

@@ -108,6 +108,15 @@ export async function robloxLogin(username: string, password: string) {
     throw new Error("No cookie returned");
 }
 
+export async function requestAssetThumbnail(assetId: number, x: number, y: number, format: string) {
+    const options = {
+        method: "GET",
+        url: `https://www.roblox.com/thumbs/asset.ashx?assetid=${assetId}&x=${x}&y=${y}&format=${format}`,
+        followRedirect: true,
+    };
+    return await request.default(options);
+}
+
 export async function devprodView(universeId: number, productId: number, cookie: string) {
     // universeId is used, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
     const options = {
