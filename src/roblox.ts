@@ -118,7 +118,7 @@ export async function requestAssetThumbnail(assetId: number, x: number, y: numbe
 }
 
 export async function devprodView(universeId: number, productId: number, cookie: string) {
-    // universeId is used, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
+    // universeId is unused, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
     const options = {
         method: "GET",
         // this endpoint is not public despite being on the public api domain
@@ -241,7 +241,7 @@ export async function devprodAdd(universeId: number, devprodOptions: IDevprodUpd
 // 3. Send a request to https://www.roblox.com/build/doverifiedupload with the data and token from #2.
 
 export async function gamepassView(universeId: number, gamepassId: number, cookie: string) {
-    // universeId is used, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
+    // universeId is unused, but I'm keeping it in for API consistency and forward-compatibility with possible future Roblox APIs
     const options = {
         method: "GET",
         url: `https://api.roblox.com/marketplace/game-pass-product-info?gamePassId=${gamepassId}`,
