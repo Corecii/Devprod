@@ -5,7 +5,6 @@ Install with node and `npm install -g devprod` or download packaged binaries fro
 Devprod is a tool to create and update Roblox Developer products according to a toml or json file. This can alleviate the pain of clicking through the website when applying large changes such as sales.
 
 [`test-toml.devprod.toml`](./test-toml.devprod.toml) and [`test-json.devprod.json`](./test-json.devprod.json) are example files used for testing.
- is an example file used for testing.
 
 Devprod uses hashes of individual product entries to know when they have changed locally. Devprod will only post changes to the website if it notices that the entry has changed locally. You can override this by either forcing *every* product to post to the website or by removing the entry's hash from the file.
 
@@ -17,7 +16,7 @@ Devprod is one-way: it will only upload changes to the website. Devprod will onl
 
 | Command | Explanation |
 | :------ | :---------- |
-| `devprod game --registry --update` | will use the registry cookie and update changed entries for the `game.devprod.json` file |
+| `devprod game --registry --update` | will use the registry cookie and update changed entries for the `game.devprod.toml` or `game.devprod.json` file |
 | `devprod game -ru` | short version of the above |
 | `devprod game --registry --create` | will create products that don't have a product id. The new ids will be saved to the file and output in the terminal. |
 | `devprod game -rc` | short version of the above |
